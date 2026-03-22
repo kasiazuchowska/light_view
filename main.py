@@ -1,20 +1,18 @@
-import matplotlib.pyplot as plt
+import streamlit as st
+import numpy as np
+import plotly.graph_objects as go
 
-layout = [
-    [sg.Button("Generate plot")],
-    [sg.Image(key="plot")]
-]
+wavelengths = np.arange(380, 781, 5)
 
-window = sg.Window("Plot generator", layout)
+# Planck blackbody
+def blackbody(wl_nm, T):
+    h, c, k = 6.626e-34, 3e8, 1.381e-23
+    wl = wl_nm * 1e-9
+    return (2*h*c**2) / (wl**5 * (np.exp((h*c)/(wl*k*T)) - 1))
 
-while True:
-    event, values = window.read()
-    if event == sg.WINDOW_CLOSED:
-        break
+T = st.slider("Temperature (K)", 1000, 10000, 5778)
+intensity = blackbody(wavelengths, T)
+intensity /= intensity.max()
 
-    if event == "Generate plot":
-        plt.plot([1,2,3], [1,4,9])
-        plt.savefig("plot.png")
-        window["plot"].update("plot.png")
-
-window.close()
+fig = go.Figure(go.Bar(x=wavelengths, y=intensity))
+st.plotly_chart(fig)
