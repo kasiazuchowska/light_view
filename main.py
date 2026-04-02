@@ -219,6 +219,7 @@ canvas_result = st_canvas(
     fill_color="rgba(0,0,0,0)",
     stroke_width=stroke_width,
     stroke_color="#222222",
+    background_color="#f8f8f8",
     background_image=make_background(),
     width=CANVAS_WIDTH,
     height=CANVAS_HEIGHT,
