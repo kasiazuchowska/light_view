@@ -1,6 +1,6 @@
-streamlit==1.34.0
+streamlit
 numpy
 plotly
-streamlit-drawable-canvas
+streamlit-drawable-canvas-fix
 colour-science
 scipy

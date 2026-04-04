@@ -200,62 +200,77 @@ def wavelength_to_rgb(wl):
 
 
 # ---------------------------------------------------------------------------
-# App
+# App logic
 # ---------------------------------------------------------------------------
-st.title("Light Spectrum Drawer")
-
-stroke_width = st.slider("Brush size", 2, 20, 8)
-
-canvas_result = st_canvas(
-    fill_color="rgba(0,0,0,0)",
-    stroke_width=stroke_width,
-    stroke_color="#222222",
-    background_color="#f8f8f8",
-    background_image=make_background(),
-    width=CANVAS_WIDTH,
-    height=CANVAS_HEIGHT,
-    drawing_mode="freedraw",
-    key="spectrum_canvas",
-)
-
-if canvas_result.image_data is not None:
-    img_data = canvas_result.image_data
-    plot_alpha = img_data[:PLOT_H, MARGIN_LEFT:, 3]
+def read_spectrum_from_canvas(image_data) -> tuple[np.ndarray, np.ndarray] | None:
+    """Return (wl, intensity) arrays from canvas image data, or None if empty."""
+    plot_alpha = image_data[:PLOT_H, MARGIN_LEFT:, 3]
     plot_w = plot_alpha.shape[1]
 
     wavelengths_px = np.linspace(WL_MIN, WL_MAX, plot_w)
     intensity_px = np.zeros(plot_w)
-
     for x in range(plot_w):
         drawn_rows = np.where(plot_alpha[:, x] > 0)[0]
         if len(drawn_rows) > 0:
-            top_y = drawn_rows.min()
-            intensity_px[x] = 1.0 - top_y / PLOT_H
+            intensity_px[x] = 1.0 - drawn_rows.min() / PLOT_H
 
     wl = np.arange(WL_MIN, WL_MAX + 1, 5)
     intensity = np.interp(wl, wavelengths_px, intensity_px)
+    return (wl, intensity) if intensity.max() > 0 else None
 
-    if intensity.max() > 0:
-        colors = [wavelength_to_rgb(w) for w in wl]
-        fig_bar = go.Figure(
-            go.Bar(x=wl, y=intensity, marker_color=colors, marker_line_width=0)
-        )
-        fig_bar.update_layout(
-            xaxis_title="Wavelength (nm)",
-            yaxis_title="Relative intensity",
-            yaxis_range=[0, 1.1],
-            bargap=0,
-            plot_bgcolor="white",
-            margin=dict(t=20),
-        )
-        st.plotly_chart(fig_bar, use_container_width=True)
 
-        cx, cy = spectrum_to_xy(wl, intensity)
-        st.subheader("CIE 1931 Chromaticity")
-        fig_cie, cct_label = make_cie_diagram(cx, cy)
-        st.write(f"**x** = {cx:.4f} &nbsp;&nbsp; **y** = {cy:.4f} &nbsp;&nbsp; **CCT** ≈ {cct_label}")
-        st.plotly_chart(fig_cie, use_container_width=True)
+def make_spectrum_bar_chart(wl, intensity):
+    colors = [wavelength_to_rgb(w) for w in wl]
+    fig = go.Figure(go.Bar(x=wl, y=intensity, marker_color=colors, marker_line_width=0))
+    fig.update_layout(
+        xaxis_title="Wavelength (nm)",
+        yaxis_title="Relative intensity",
+        yaxis_range=[0, 1.1],
+        bargap=0,
+        plot_bgcolor="white",
+        margin=dict(t=20),
+    )
+    return fig
+
+
+def render_results(wl, intensity):
+    st.plotly_chart(make_spectrum_bar_chart(wl, intensity), use_container_width=True)
+
+    cx, cy = spectrum_to_xy(wl, intensity)
+    fig_cie, cct_label = make_cie_diagram(cx, cy)
+    st.subheader("CIE 1931 Chromaticity")
+    st.write(f"**x** = {cx:.4f} &nbsp;&nbsp; **y** = {cy:.4f} &nbsp;&nbsp; **CCT** ≈ {cct_label}")
+    st.plotly_chart(fig_cie, use_container_width=True)
+
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
+def main():
+    st.title("Light Spectrum Drawer")
+
+    stroke_width = st.slider("Brush size", 2, 20, 8)
+
+    canvas_result = st_canvas(
+        fill_color="rgba(0,0,0,0)",
+        stroke_width=stroke_width,
+        stroke_color="#222222",
+        background_color="#f8f8f8",
+        background_image=make_background(),
+        width=CANVAS_WIDTH,
+        height=CANVAS_HEIGHT,
+        drawing_mode="freedraw",
+        key="spectrum_canvas",
+    )
+
+    if canvas_result.image_data is not None:
+        spectrum = read_spectrum_from_canvas(canvas_result.image_data)
+        if spectrum:
+            render_results(*spectrum)
+        else:
+            st.info("Draw something on the canvas to see the spectrum.")
     else:
         st.info("Draw something on the canvas to see the spectrum.")
-else:
-    st.info("Draw something on the canvas to see the spectrum.")
+
+
+main()
