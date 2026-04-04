@@ -94,7 +94,7 @@ def peaks_mode():
 
 
 def main():
-    st.title("Light Spectrum Drawer")
+    st.title("Light Spectrum Analyzer")
     mode = st.radio("Input mode", ["Draw", "Peaks"], horizontal=True)
     if mode == "Draw":
         draw_mode()
