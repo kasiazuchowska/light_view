@@ -10,7 +10,7 @@ from PIL import Image, ImageDraw, ImageFont
 # ---------------------------------------------------------------------------
 MARGIN_LEFT = 45
 MARGIN_BOTTOM = 30
-PLOT_W = 760
+PLOT_W = 580
 PLOT_H = 260
 CANVAS_WIDTH = MARGIN_LEFT + PLOT_W
 CANVAS_HEIGHT = PLOT_H + MARGIN_BOTTOM
@@ -180,27 +180,18 @@ def make_background():
 
 
 def wavelength_to_rgb(wl):
-    if 380 <= wl < 440:
-        r, g, b = -(wl - 440) / 60, 0.0, 1.0
-    elif 440 <= wl < 490:
-        r, g, b = 0.0, (wl - 440) / 50, 1.0
-    elif 490 <= wl < 510:
-        r, g, b = 0.0, 1.0, -(wl - 510) / 20
-    elif 510 <= wl < 580:
-        r, g, b = (wl - 510) / 70, 1.0, 0.0
-    elif 580 <= wl < 645:
-        r, g, b = 1.0, -(wl - 645) / 65, 0.0
-    elif 645 <= wl <= 780:
-        r, g, b = 1.0, 0.0, 0.0
-    else:
-        r, g, b = 0.0, 0.0, 0.0
+    if not (380 <= wl <= 780):
+        return "rgb(0,0,0)"
 
-    if 380 <= wl < 420:
-        factor = 0.3 + 0.7 * (wl - 380) / 40
-    elif 700 < wl <= 780:
-        factor = 0.3 + 0.7 * (780 - wl) / 80
-    else:
-        factor = 1.0
+    wls    = [380, 440, 490, 510, 580, 645, 780]
+    r_vals = [1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0]
+    g_vals = [0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0]
+    b_vals = [1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0]
+
+    r = np.interp(wl, wls, r_vals)
+    g = np.interp(wl, wls, g_vals)
+    b = np.interp(wl, wls, b_vals)
+    factor = np.interp(wl, [380, 420, 700, 780], [0.3, 1.0, 1.0, 0.3])
 
     r = int(255 * (r * factor) ** 0.8)
     g = int(255 * (g * factor) ** 0.8)
