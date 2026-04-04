@@ -1,6 +1,8 @@
 import numpy as np
 import colour
 
+WL_MIN, WL_MAX = 380, 780
+
 
 def wavelength_to_rgb(wl: float) -> str:
     if not (380 <= wl <= 780):
@@ -26,6 +28,18 @@ def spectrum_to_xy(wl_nm: np.ndarray, intensity: np.ndarray) -> tuple[float, flo
     sd = colour.SpectralDistribution(dict(zip(wl_nm.tolist(), intensity.tolist())))
     XYZ = colour.sd_to_XYZ(sd)
     return colour.XYZ_to_xy(XYZ / 100)
+
+
+def gaussian_spectrum(peaks: list[dict]) -> tuple[np.ndarray, np.ndarray] | None:
+    wl = np.arange(WL_MIN, WL_MAX + 1, 5, dtype=float)
+    intensity = np.zeros_like(wl)
+    for p in peaks:
+        sigma2 = p["fwhm"] ** 2 / (8 * np.log(2))
+        intensity += p["height"] * np.exp(-((wl - p["center"]) ** 2) / (2 * sigma2))
+    intensity = np.clip(intensity, 0, None)
+    if intensity.max() == 0:
+        return None
+    return (wl, intensity / intensity.max())
 
 
 def xy_to_uv(xy: np.ndarray) -> np.ndarray:

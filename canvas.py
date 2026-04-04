@@ -1,6 +1,8 @@
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
+from spectrum import WL_MIN, WL_MAX
+
 # ---------------------------------------------------------------------------
 # Layout constants
 # ---------------------------------------------------------------------------
@@ -10,7 +12,6 @@ PLOT_W        = 580
 PLOT_H        = 260
 CANVAS_WIDTH  = MARGIN_LEFT + PLOT_W
 CANVAS_HEIGHT = PLOT_H + MARGIN_BOTTOM
-WL_MIN, WL_MAX = 380, 780
 
 X_TICKS = [380, 400, 450, 500, 550, 600, 650, 700, 750, 780]
 Y_TICKS = [0.0, 0.25, 0.5, 0.75, 1.0]
