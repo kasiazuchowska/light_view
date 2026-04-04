@@ -35,11 +35,9 @@ def gaussian_spectrum(peaks: list[dict]) -> tuple[np.ndarray, np.ndarray] | None
     intensity = np.zeros_like(wl)
     for p in peaks:
         sigma2 = p["fwhm"] ** 2 / (8 * np.log(2))
-        intensity += p["height"] * np.exp(-((wl - p["center"]) ** 2) / (2 * sigma2))
-    intensity = np.clip(intensity, 0, None)
-    if intensity.max() == 0:
-        return None
-    return (wl, intensity / intensity.max())
+        peak = p["height"] * np.exp(-((wl - p["center"]) ** 2) / (2 * sigma2))
+        intensity = np.maximum(intensity, peak)
+    return (wl, intensity) if intensity.max() > 0 else None
 
 
 def xy_to_uv(xy: np.ndarray) -> np.ndarray:
