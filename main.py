@@ -82,22 +82,43 @@ def make_cie_diagram(cx, cy):
         hoverinfo="skip",
     ))
 
-    # Temperature labels on the Planckian locus
-    for T in [1500, 2000, 2700, 3000, 4000, 5000, 6500, 10000]:
-        if T < 1667:
-            continue
+    # Temperature labels + isothermal tick marks on the Planckian locus.
+    # Isotherms are perpendicular to the locus in CIE 1960 uv space (Robertson method),
+    # then converted back to xy for plotting.
+    def xy_to_uv(xy):
+        x, y = xy
+        d = -2 * x + 12 * y + 3
+        return np.array([4 * x / d, 6 * y / d])
+
+    def uv_to_xy(uv):
+        u, v = uv
+        d = 2 * u - 8 * v + 4
+        return np.array([3 * u / d, 2 * v / d])
+
+    tick_len_uv = 0.015
+    dT = 100
+    for T in [2000, 2700, 3000, 4000, 5000, 6500, 10000]:
         xy_T = colour.temperature.CCT_to_xy_Kang2002(np.array([T]))[0]
         fig.add_annotation(
             x=xy_T[0], y=xy_T[1], text=f"{T}K",
             showarrow=False, font=dict(size=8, color="#333333"),
             xshift=6, yshift=-10,
         )
+        # Compute tangent in uv, rotate 90° for the isotherm normal
+        uv_lo = xy_to_uv(colour.temperature.CCT_to_xy_Kang2002(np.array([max(1667, T - dT)]))[0])
+        uv_hi = xy_to_uv(colour.temperature.CCT_to_xy_Kang2002(np.array([min(20000, T + dT)]))[0])
+        tangent_uv = uv_hi - uv_lo
+        tangent_uv /= np.linalg.norm(tangent_uv)
+        normal_uv = np.array([-tangent_uv[1], tangent_uv[0]])
+        uv_T = xy_to_uv(xy_T)
+        p0 = uv_to_xy(uv_T - normal_uv * tick_len_uv)
+        p1 = uv_to_xy(uv_T + normal_uv * tick_len_uv)
         fig.add_trace(go.Scatter(
-            x=[xy_T[0]], y=[xy_T[1]],
-            mode="markers",
-            marker=dict(size=4, color="#333333"),
+            x=[p0[0], p1[0]], y=[p0[1], p1[1]],
+            mode="lines",
+            line=dict(color="#333333", width=1),
             showlegend=False,
-            hovertemplate=f"{T} K<extra></extra>",
+            hoverinfo="skip",
         ))
 
     # The drawn spectrum point + CCT connection
@@ -126,10 +147,11 @@ def make_cie_diagram(cx, cy):
     except Exception:
         cct_label = "n/a"
 
+    # Your spectrum's chromaticity point
     fig.add_trace(go.Scatter(
         x=[cx], y=[cy],
         mode="markers",
-        marker=dict(size=14, color="white", line=dict(color="black", width=2)),
+        marker=dict(size=8, color="white", line=dict(color="black", width=2)),
         name=f"Your spectrum (~{cct_label})",
         hovertemplate=f"x={cx:.4f}<br>y={cy:.4f}<br>CCT ≈ {cct_label}<extra></extra>",
     ))
