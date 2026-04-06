@@ -1,6 +1,0 @@
-streamlit
-numpy
-plotly
-streamlit-drawable-canvas-fix
-colour-science
-scipy
