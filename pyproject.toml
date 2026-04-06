@@ -1,0 +1,12 @@
+[project]
+name = "light-view"
+version = "0.1.0"
+requires-python = "==3.12.*"
+dependencies = [
+    "streamlit",
+    "numpy",
+    "plotly",
+    "streamlit-drawable-canvas-fix",
+    "colour-science",
+    "scipy",
+]
