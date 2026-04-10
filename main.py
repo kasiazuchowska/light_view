@@ -1,3 +1,4 @@
+import numpy as np
 import streamlit as st
 
 from canvas import make_background, read_spectrum_from_canvas, CANVAS_WIDTH, CANVAS_HEIGHT
@@ -6,13 +7,31 @@ from spectrum import WL_MIN, WL_MAX, spectrum_to_xy, gaussian_spectrum
 from streamlit_drawable_canvas import st_canvas
 
 
+def spectrum_to_text(wl: np.ndarray, intensity: np.ndarray) -> str:
+    wl_1nm = np.arange(WL_MIN, WL_MAX + 1, 1, dtype=float)
+    intensity_1nm = np.interp(wl_1nm, wl, intensity)
+    max_val = intensity_1nm.max()
+    if max_val > 0:
+        intensity_1nm /= max_val
+    lines = ["wavelength_nm\tintensity"]
+    for w, i in zip(wl_1nm, intensity_1nm):
+        lines.append(f"{int(w)}\t{i:.6f}")
+    return "\n".join(lines)
+
+
 def render_results(wl, intensity):
-    st.plotly_chart(make_spectrum_bar_chart(wl, intensity), use_container_width=True, height=400)
+    st.plotly_chart(make_spectrum_bar_chart(wl, intensity), width='stretch', height=400)
+    st.download_button(
+        label="Export spectrum (TXT)",
+        data=spectrum_to_text(wl, intensity),
+        file_name="spectrum.txt",
+        mime="text/plain",
+    )
     cx, cy = spectrum_to_xy(wl, intensity)
     fig_cie, cct_label = make_cie_diagram(cx, cy)
     st.subheader("CIE 1931 Chromaticity")
     st.write(f"**x** = {cx:.4f} &nbsp;&nbsp; **y** = {cy:.4f} &nbsp;&nbsp; **CCT** ≈ {cct_label}")
-    st.plotly_chart(fig_cie, use_container_width=True, height=550)
+    st.plotly_chart(fig_cie, width='stretch', height=550)
 
 
 def draw_mode():
@@ -24,7 +43,7 @@ def draw_mode():
         stroke_width = st.slider("Brush size", 2, 20, 8)
     with col2:
         st.write("")
-        if st.button("Clear canvas", use_container_width=True):
+        if st.button("Clear canvas", width='stretch'):
             st.session_state.canvas_key += 1
 
     canvas_result = st_canvas(
@@ -66,7 +85,7 @@ def peaks_mode():
             fwhm = st.number_input("FWHM (nm)", min_value=1.0, max_value=400.0, value=25.0, step=1.0)
         with c4:
             st.write("")
-            submitted = st.form_submit_button("Add peak", use_container_width=True)
+            submitted = st.form_submit_button("Add peak", width='stretch')
 
     if submitted:
         st.session_state.peaks.append({"center": center, "height": height, "fwhm": fwhm})
@@ -93,13 +112,60 @@ def peaks_mode():
         st.info("Add at least one peak to see the spectrum.")
 
 
+def import_mode():
+    uploaded = st.file_uploader("Upload a spectrum TXT file", type=["txt"])
+    if uploaded is None:
+        st.info("Upload a TXT file with two columns: wavelength_nm and intensity.")
+        return
+
+    try:
+        content = uploaded.read().decode("utf-8")
+        rows = []
+        for line in content.splitlines():
+            line = line.strip()
+            if not line or line.lower().startswith("wavelength"):
+                continue
+            parts = line.split()
+            if len(parts) < 2:
+                continue
+            rows.append((float(parts[0]), float(parts[1])))
+
+        if not rows:
+            st.error("No data rows found in file.")
+            return
+
+        wl_raw = np.array([r[0] for r in rows])
+        intensity_raw = np.array([r[1] for r in rows])
+
+        wl_clipped = np.clip(wl_raw, WL_MIN, WL_MAX)
+        order = np.argsort(wl_clipped)
+        wl_sorted = wl_clipped[order]
+        intensity_sorted = intensity_raw[order]
+
+        wl = np.arange(WL_MIN, WL_MAX + 1, 1, dtype=float)
+        intensity = np.interp(wl, wl_sorted, intensity_sorted)
+
+        max_val = intensity.max()
+        if max_val <= 0:
+            st.error("All intensity values are zero.")
+            return
+        intensity /= max_val
+
+        render_results(wl, intensity)
+
+    except Exception as e:
+        st.error(f"Could not parse file: {e}")
+
+
 def main():
     st.title("Light Spectrum Analyzer")
-    mode = st.radio("Input mode", ["Draw", "Peaks"], horizontal=True)
+    mode = st.radio("Input mode", ["Draw", "Peaks", "Import"], horizontal=True)
     if mode == "Draw":
         draw_mode()
-    else:
+    elif mode == "Peaks":
         peaks_mode()
+    else:
+        import_mode()
 
 
 main()

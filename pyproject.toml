@@ -8,5 +8,6 @@ dependencies = [
     "plotly",
     "streamlit-drawable-canvas-fix",
     "colour-science",
+    "matplotlib",
     "scipy",
 ]
