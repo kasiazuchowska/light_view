@@ -10,9 +10,6 @@ from streamlit_drawable_canvas import st_canvas
 def spectrum_to_text(wl: np.ndarray, intensity: np.ndarray) -> str:
     wl_1nm = np.arange(WL_MIN, WL_MAX + 1, 1, dtype=float)
     intensity_1nm = np.interp(wl_1nm, wl, intensity)
-    max_val = intensity_1nm.max()
-    if max_val > 0:
-        intensity_1nm /= max_val
     lines = ["wavelength_nm\tintensity"]
     for w, i in zip(wl_1nm, intensity_1nm):
         lines.append(f"{int(w)}\t{i:.6f}")
@@ -145,11 +142,9 @@ def import_mode():
         wl = np.arange(WL_MIN, WL_MAX + 1, 1, dtype=float)
         intensity = np.interp(wl, wl_sorted, intensity_sorted)
 
-        max_val = intensity.max()
-        if max_val <= 0:
+        if intensity.max() <= 0:
             st.error("All intensity values are zero.")
             return
-        intensity /= max_val
 
         render_results(wl, intensity)
 
