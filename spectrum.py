@@ -24,10 +24,29 @@ def wavelength_to_rgb(wl: float) -> str:
     return f"rgb({r},{g},{b})"
 
 
+def _make_sd(wl_nm: np.ndarray, intensity: np.ndarray) -> colour.SpectralDistribution:
+    return colour.SpectralDistribution(dict(zip(wl_nm.tolist(), intensity.tolist())))
+
+
 def spectrum_to_xy(wl_nm: np.ndarray, intensity: np.ndarray) -> tuple[float, float]:
-    sd = colour.SpectralDistribution(dict(zip(wl_nm.tolist(), intensity.tolist())))
-    XYZ = colour.sd_to_XYZ(sd)
+    XYZ = colour.sd_to_XYZ(_make_sd(wl_nm, intensity))
     return colour.XYZ_to_xy(XYZ / 100)
+
+
+def spectrum_to_cri(wl_nm: np.ndarray, intensity: np.ndarray) -> float | None:
+    try:
+        return colour.colour_rendering_index(_make_sd(wl_nm, intensity))
+    except Exception:
+        return None
+
+
+def spectrum_to_tm30(wl_nm: np.ndarray, intensity: np.ndarray):
+    try:
+        return colour.colour_fidelity_index(
+            _make_sd(wl_nm, intensity), additional_data=True, method="ANSI/IES TM-30-18"
+        )
+    except Exception:
+        return None
 
 
 def gaussian_spectrum(peaks: list[dict]) -> tuple[np.ndarray, np.ndarray] | None:
@@ -52,3 +71,13 @@ def uv_to_xy(uv: np.ndarray) -> np.ndarray:
     u, v = uv
     d = 2 * u - 8 * v + 4
     return np.array([3 * u / d, 2 * v / d])
+
+
+def spectrum_to_duv(wl_nm: np.ndarray, intensity: np.ndarray) -> float | None:
+    try:
+        uv = xy_to_uv(np.array(spectrum_to_xy(wl_nm, intensity)))
+        cct = float(np.clip(colour.temperature.uv_to_CCT_Robertson1968(uv)[0], 1667, 20000))
+        uv_planck = xy_to_uv(colour.temperature.CCT_to_xy_Kang2002(np.array([cct]))[0])
+        return float(np.linalg.norm(uv - uv_planck))
+    except Exception:
+        return None

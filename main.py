@@ -2,8 +2,8 @@ import numpy as np
 import streamlit as st
 
 from canvas import make_background, read_spectrum_from_canvas, CANVAS_WIDTH, CANVAS_HEIGHT
-from diagrams import make_cie_diagram, make_spectrum_bar_chart
-from spectrum import WL_MIN, WL_MAX, spectrum_to_xy, gaussian_spectrum
+from diagrams import make_cie_diagram, make_spectrum_bar_chart, make_color_vector_diagram
+from spectrum import WL_MIN, WL_MAX, spectrum_to_xy, spectrum_to_cri, spectrum_to_duv, spectrum_to_tm30, gaussian_spectrum
 from streamlit_drawable_canvas import st_canvas
 
 
@@ -25,10 +25,33 @@ def render_results(wl, intensity):
         mime="text/plain",
     )
     cx, cy = spectrum_to_xy(wl, intensity)
-    fig_cie, cct_label = make_cie_diagram(cx, cy)
+    duv = spectrum_to_duv(wl, intensity)
+    duv_label = f"{duv:.4f}" if duv is not None else "n/a"
+    fig_cie, hernandez_label, mccamy_label = make_cie_diagram(cx, cy)
+
     st.subheader("CIE 1931 Chromaticity")
-    st.write(f"**x** = {cx:.4f} &nbsp;&nbsp; **y** = {cy:.4f} &nbsp;&nbsp; **CCT** ≈ {cct_label}")
+    st.write(
+        f"**x** = {cx:.4f} &nbsp;&nbsp; **y** = {cy:.4f}"
+        f"&nbsp;&nbsp;&nbsp; **CCT (Hernandez 1999)** ≈ {hernandez_label}"
+        f"&nbsp;&nbsp; **CCT (McCamy 1992)** ≈ {mccamy_label}"
+        f"&nbsp;&nbsp;&nbsp; **Duv** = {duv_label}"
+    )
     st.plotly_chart(fig_cie, width='stretch', height=550)
+
+    cri = spectrum_to_cri(wl, intensity)
+    tm30 = spectrum_to_tm30(wl, intensity)
+    cri_label = f"{cri:.0f}" if cri is not None else "n/a"
+    rf_label  = f"{tm30.R_f:.0f}" if tm30 is not None else "n/a"
+    rg_label  = f"{tm30.R_g:.0f}" if tm30 is not None else "n/a"
+    fig_cvg = make_color_vector_diagram(tm30)
+    st.subheader("Color Rendering")
+    st.write(
+        f"**CRI (Ra)** = {cri_label}"
+        f"&nbsp;&nbsp;&nbsp; **Rf (TM-30)** = {rf_label}"
+        f"&nbsp;&nbsp; **Rg (TM-30)** = {rg_label}"
+    )
+    if fig_cvg is not None:
+        st.plotly_chart(fig_cvg, width='stretch', height=500)
 
 
 def draw_mode():
