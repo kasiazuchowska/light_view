@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import colour
 import numpy as np
 import streamlit as st
 import torch
@@ -215,6 +216,19 @@ def generate_mode():
     z_scaled = st.session_state.gen_z * temperature
     intensity = model.decode_z(z_scaled, float(cct))
     intensity /= intensity.max()
+
+    cx, cy = spectrum_to_xy(wl, intensity)
+    try:
+        actual_cct = colour.temperature.xy_to_CCT_Hernandez1999(np.array([cx, cy]))
+        deviation = abs(actual_cct - cct) / cct
+        if deviation > 0.2:
+            st.warning(
+                f"Generated spectrum has CCT ≈ {actual_cct:.0f} K (requested {cct:.0f} K). "
+                "Try reducing Diversity or clicking New sample."
+            )
+    except Exception:
+        pass
+
     render_results(wl, intensity)
 
 
