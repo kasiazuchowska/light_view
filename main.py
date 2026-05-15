@@ -1,8 +1,12 @@
+from pathlib import Path
+
 import numpy as np
 import streamlit as st
+import torch
 
 from canvas import make_background, read_spectrum_from_canvas, CANVAS_WIDTH, CANVAS_HEIGHT
 from diagrams import make_cie_diagram, make_spectrum_bar_chart, make_color_vector_diagram
+from model import ConditionalVAE, LATENT_DIM, MODEL_PATH
 from spectrum import WL_MIN, WL_MAX, spectrum_to_xy, spectrum_to_cri, spectrum_to_duv, spectrum_to_tm30, gaussian_spectrum
 from streamlit_drawable_canvas import st_canvas
 
@@ -175,15 +179,56 @@ def import_mode():
         st.error(f"Could not parse file: {e}")
 
 
+@st.cache_resource
+def _load_model() -> ConditionalVAE | None:
+    if not Path(MODEL_PATH).exists():
+        return None
+    model = ConditionalVAE()
+    model.load_state_dict(torch.load(MODEL_PATH, map_location="cpu"))
+    model.eval()
+    return model
+
+
+def generate_mode():
+    model = _load_model()
+    if model is None:
+        st.warning("No trained model found. Run `python train.py` from the project directory first.")
+        return
+
+    cct = st.number_input("Target CCT (K)", min_value=100, max_value=100000, value=4000, step=100)
+    if not (1630 <= cct <= 18273):
+        st.warning("CCT is outside the training range (1630–18273 K). Results may be unreliable.")
+
+    if st.button("New sample"):
+        st.session_state.gen_z = ConditionalVAE.sample_z()
+
+    if "gen_z" not in st.session_state:
+        st.session_state.gen_z = ConditionalVAE.sample_z()
+
+    temperature = st.slider(
+        "Diversity", min_value=0.0, max_value=2.0, value=1.0, step=0.05,
+        help="0 = always the same average spectrum for this CCT. "
+             "Higher = more varied / unusual shapes.",
+    )
+
+    wl = np.arange(WL_MIN, WL_MAX + 1, 1, dtype=float)
+    z_scaled = st.session_state.gen_z * temperature
+    intensity = model.decode_z(z_scaled, float(cct))
+    intensity /= intensity.max()
+    render_results(wl, intensity)
+
+
 def main():
     st.title("Light Spectrum Analyzer")
-    mode = st.radio("Input mode", ["Draw", "Peaks", "Import"], horizontal=True)
+    mode = st.radio("Input mode", ["Draw", "Peaks", "Import", "Generate"], horizontal=True)
     if mode == "Draw":
         draw_mode()
     elif mode == "Peaks":
         peaks_mode()
-    else:
+    elif mode == "Import":
         import_mode()
+    else:
+        generate_mode()
 
 
 main()
