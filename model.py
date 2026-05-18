@@ -2,7 +2,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-MODEL_PATH = "model.pt"
+MODEL_PATH = str(__import__("pathlib").Path(__file__).parent / "model.pt")
 
 SPD_DIM = 401
 LATENT_DIM = 16
