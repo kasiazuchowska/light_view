@@ -241,6 +241,77 @@ def make_color_vector_diagram(tm30_spec) -> go.Figure | None:
     return fig
 
 
+# Approximate sRGB colors for CIE TCS01–TCS14
+_TCS_COLORS = [
+    "#9B5252",  # R1  – greyish red
+    "#C4975A",  # R2  – dark greyish yellow
+    "#A0A43C",  # R3  – strong yellow green
+    "#5EAA5E",  # R4  – moderate yellowish green
+    "#3EA898",  # R5  – light bluish green
+    "#4A82B8",  # R6  – light blue
+    "#7B5EAD",  # R7  – light violet
+    "#C4607A",  # R8  – light reddish purple
+    "#D42020",  # R9  – strong red
+    "#E8C820",  # R10 – strong yellow
+    "#28A828",  # R11 – strong green
+    "#2040C0",  # R12 – strong blue
+    "#E8AA88",  # R13 – light greyish pink (skin tone)
+    "#6A8830",  # R14 – moderate olive green (leaf)
+]
+
+
+def make_cri_ri_chart(ri_values: dict[int, float], ra: float) -> go.Figure:
+    indices = sorted(ri_values.keys())
+    values  = [ri_values[i] for i in indices]
+    labels  = [f"R{i}" for i in indices]
+    colors  = [_TCS_COLORS[i - 1] if 1 <= i <= 14 else "#aaaaaa" for i in indices]
+
+    fig = go.Figure()
+    fig.add_trace(go.Bar(
+        x=labels, y=values,
+        marker_color=colors,
+        text=[f"{v:.0f}" for v in values],
+        textposition="outside",
+        cliponaxis=False,
+        hovertemplate="%{x}: %{y:.1f}<extra></extra>",
+        showlegend=False,
+    ))
+    fig.add_hline(y=ra, line=dict(color="#333333", width=1.5, dash="dash"),
+                  annotation_text=f"Ra = {ra:.0f}", annotation_position="top right")
+    fig.update_layout(
+        xaxis_title="Test Colour Sample",
+        yaxis_title="CRI value",
+        plot_bgcolor="white",
+        margin=dict(t=20),
+        bargap=0.2,
+    )
+    return fig
+
+
+def make_rf_individual_chart(r_s: np.ndarray) -> go.Figure:
+    n = len(r_s)
+    indices = np.arange(1, n + 1)
+    hues    = np.linspace(0, 360, n, endpoint=False)
+    colors  = [f"hsl({int(h)},70%,50%)" for h in hues]
+
+    fig = go.Figure(go.Bar(
+        x=indices, y=r_s,
+        marker_color=colors,
+        marker_line_width=0,
+        hovertemplate="CES %{x}: Rf = %{y:.1f}<extra></extra>",
+    ))
+    fig.add_hline(y=float(np.mean(r_s)), line=dict(color="#333333", width=1.5, dash="dash"),
+                  annotation_text=f"mean = {float(np.mean(r_s)):.0f}", annotation_position="top right")
+    fig.update_layout(
+        xaxis_title="Color Evaluation Sample (CES)",
+        yaxis_title="Rf individual",
+        plot_bgcolor="white",
+        margin=dict(t=20),
+        bargap=0,
+    )
+    return fig
+
+
 def make_spectrum_bar_chart(wl: np.ndarray, intensity: np.ndarray) -> go.Figure:
     colors = [wavelength_to_rgb(w) for w in wl]
     fig    = go.Figure(go.Bar(x=wl, y=intensity, marker_color=colors, marker_line_width=0))

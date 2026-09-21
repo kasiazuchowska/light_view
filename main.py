@@ -6,9 +6,9 @@ import streamlit as st
 import torch
 
 from canvas import make_background, read_spectrum_from_canvas, CANVAS_WIDTH, CANVAS_HEIGHT
-from diagrams import make_cie_diagram, make_spectrum_bar_chart, make_color_vector_diagram
+from diagrams import make_cie_diagram, make_spectrum_bar_chart, make_color_vector_diagram, make_cri_ri_chart, make_rf_individual_chart
 from model import ConditionalVAE, LATENT_DIM, MODEL_PATH
-from spectrum import WL_MIN, WL_MAX, spectrum_to_xy, spectrum_to_cri, spectrum_to_duv, spectrum_to_tm30, gaussian_spectrum
+from spectrum import WL_MIN, WL_MAX, spectrum_to_xy, spectrum_to_cri, spectrum_to_cri_ri, spectrum_to_duv, spectrum_to_tm30, gaussian_spectrum
 from streamlit_drawable_canvas import st_canvas
 
 
@@ -44,6 +44,7 @@ def render_results(wl, intensity):
     st.plotly_chart(fig_cie, width='stretch', height=550)
 
     cri = spectrum_to_cri(wl, intensity)
+    cri_ri = spectrum_to_cri_ri(wl, intensity)
     tm30 = spectrum_to_tm30(wl, intensity)
     cri_label = f"{cri:.0f}" if cri is not None else "n/a"
     rf_label  = f"{tm30.R_f:.0f}" if tm30 is not None else "n/a"
@@ -55,6 +56,12 @@ def render_results(wl, intensity):
         f"&nbsp;&nbsp;&nbsp; **Rf (TM-30)** = {rf_label}"
         f"&nbsp;&nbsp; **Rg (TM-30)** = {rg_label}"
     )
+    if cri is not None and cri_ri is not None:
+        st.markdown("**CRI – individual values R1–R14**")
+        st.plotly_chart(make_cri_ri_chart(cri_ri, cri), width='stretch', height=350)
+    if tm30 is not None and tm30.R_s is not None and len(tm30.R_s) > 0:
+        st.markdown("**TM-30 – individual fidelity Rf1–Rf99**")
+        st.plotly_chart(make_rf_individual_chart(tm30.R_s), width='stretch', height=350)
     if fig_cvg is not None:
         st.plotly_chart(fig_cvg, width='stretch', height=500)
 

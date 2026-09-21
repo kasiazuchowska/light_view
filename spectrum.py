@@ -40,6 +40,15 @@ def spectrum_to_cri(wl_nm: np.ndarray, intensity: np.ndarray) -> float | None:
         return None
 
 
+def spectrum_to_cri_ri(wl_nm: np.ndarray, intensity: np.ndarray) -> dict[int, float] | None:
+    """Return individual CRI values R1-R14 keyed by index."""
+    try:
+        result = colour.colour_rendering_index(_make_sd(wl_nm, intensity), additional_data=True)
+        return {k: v.Q_a for k, v in result.Q_as.items()}
+    except Exception:
+        return None
+
+
 def spectrum_to_tm30(wl_nm: np.ndarray, intensity: np.ndarray):
     try:
         return colour.colour_fidelity_index(
