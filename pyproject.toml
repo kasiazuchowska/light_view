@@ -6,7 +6,7 @@ dependencies = [
     "streamlit",
     "numpy",
     "plotly",
-    "streamlit-drawable-canvas-fix",
+    "streamlit-drawable-canvas",
     "colour-science",
     "matplotlib",
     "scipy",

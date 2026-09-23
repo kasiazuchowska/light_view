@@ -363,7 +363,7 @@ dependencies = [
     { name = "plotly" },
     { name = "scipy" },
     { name = "streamlit" },
-    { name = "streamlit-drawable-canvas-fix" },
+    { name = "streamlit-drawable-canvas" },
     { name = "torch" },
 ]
 
@@ -376,7 +376,7 @@ requires-dist = [
     { name = "plotly" },
     { name = "scipy" },
     { name = "streamlit" },
-    { name = "streamlit-drawable-canvas-fix" },
+    { name = "streamlit-drawable-canvas" },
     { name = "torch" },
 ]
 
@@ -891,17 +891,15 @@ wheels = [
 ]
 
 [[package]]
-name = "streamlit-drawable-canvas-fix"
-version = "0.9.8"
+name = "streamlit-drawable-canvas"
+version = "0.13.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "numpy" },
-    { name = "pillow" },
     { name = "streamlit" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/cb/7c/f7d1823c4ad01d4ba1bff2651ea2468a934997fed5d5f7819f7119ab4382/streamlit_drawable_canvas_fix-0.9.8.tar.gz", hash = "sha256:7bda602983ee6e74365e70714dac23e0c3334f9f066455ff3eb949916a175078", size = 1158729, upload-time = "2025-11-19T10:46:06.727Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d3/04/57c835ba28a67f6f1dbd4c78d58dc333606ee2b958044bb554b73c0c7e23/streamlit_drawable_canvas-0.13.0.tar.gz", hash = "sha256:9e65b8abfc8b1fdd541425ac8ff24d320d5067b8646f58bb29e199188fbff3e8", size = 130970, upload-time = "2026-09-04T23:02:25.249Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/5b/0c/1d52e24668579e45195125f1c302680f64ce9087ee55dbe5984c63641f8c/streamlit_drawable_canvas_fix-0.9.8-py3-none-any.whl", hash = "sha256:99f3664a29adbf68c41dbb45c3bddd074c91c7a3e6f4af95e880031422b40ca0", size = 1169376, upload-time = "2025-11-19T10:45:59.045Z" },
+    { url = "https://files.pythonhosted.org/packages/6f/40/0aff91c8f853dcb0ff75a6d46c37c67855162f42b59cc8492ad2c387e574/streamlit_drawable_canvas-0.13.0-py3-none-any.whl", hash = "sha256:3120cb0be0b499a456eed18a987b07a73e74952fd5911bd4cde04ceb96ed41b6", size = 125646, upload-time = "2026-09-04T23:02:24.047Z" },
 ]
 
 [[package]]

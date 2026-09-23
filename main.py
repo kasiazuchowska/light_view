@@ -92,6 +92,7 @@ def draw_mode():
         width=CANVAS_WIDTH,
         height=CANVAS_HEIGHT,
         drawing_mode="freedraw",
+        return_image_data=True,
         key=f"spectrum_canvas_{st.session_state.canvas_key}",
     )
 
