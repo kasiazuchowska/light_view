@@ -18,7 +18,7 @@ Y_TICKS = [0.0, 0.25, 0.5, 0.75, 1.0]
 
 
 def make_background() -> Image.Image:
-    img  = Image.new("RGB", (CANVAS_WIDTH, CANVAS_HEIGHT), "#f8f8f8")
+    img  = Image.new("RGB", (CANVAS_WIDTH, CANVAS_HEIGHT), "#ffffff")
     draw = ImageDraw.Draw(img)
     try:
         font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 11)

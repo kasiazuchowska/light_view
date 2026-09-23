@@ -78,11 +78,16 @@ def draw_mode():
         if st.button("Clear canvas", width='stretch'):
             st.session_state.canvas_key += 1
 
+    st.markdown(
+        "<style>.stCustomComponentV1 > iframe { border: 1px solid #cccccc !important; }</style>",
+        unsafe_allow_html=True,
+    )
+
     canvas_result = st_canvas(
         fill_color="rgba(0,0,0,0)",
         stroke_width=stroke_width,
         stroke_color="#222222",
-        background_color="#f8f8f8",
+        background_color="#ffffff",
         background_image=make_background(),
         width=CANVAS_WIDTH,
         height=CANVAS_HEIGHT,
