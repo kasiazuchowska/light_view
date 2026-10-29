@@ -59,12 +59,14 @@ def spectrum_to_tm30(wl_nm: np.ndarray, intensity: np.ndarray):
 
 
 def gaussian_spectrum(peaks: list[dict]) -> tuple[np.ndarray, np.ndarray] | None:
-    wl = np.arange(WL_MIN, WL_MAX + 1, 5, dtype=float)
+    wl = np.arange(WL_MIN, WL_MAX + 1, 1, dtype=float)
     intensity = np.zeros_like(wl)
     for p in peaks:
         sigma2 = p["fwhm"] ** 2 / (8 * np.log(2))
         peak = p["height"] * np.exp(-((wl - p["center"]) ** 2) / (2 * sigma2))
-        intensity = np.maximum(intensity, peak)
+        intensity += peak
+    if intensity.max() > 1:
+        intensity /= intensity.max()
     return (wl, intensity) if intensity.max() > 0 else None
 
 

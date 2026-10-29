@@ -175,9 +175,13 @@ def import_mode():
         wl_raw = np.array([r[0] for r in rows])
         intensity_raw = np.array([r[1] for r in rows])
 
-        wl_clipped = np.clip(wl_raw, WL_MIN, WL_MAX)
-        order = np.argsort(wl_clipped)
-        wl_sorted = wl_clipped[order]
+        mask = (wl_raw >= WL_MIN) & (wl_raw <= WL_MAX)
+        if not mask.any():
+            st.error(f"No data in the {WL_MIN}–{WL_MAX} nm range.")
+            return
+        wl_raw, intensity_raw = wl_raw[mask], intensity_raw[mask]
+        order = np.argsort(wl_raw)
+        wl_sorted = wl_raw[order]
         intensity_sorted = intensity_raw[order]
 
         wl = np.arange(WL_MIN, WL_MAX + 1, 1, dtype=float)

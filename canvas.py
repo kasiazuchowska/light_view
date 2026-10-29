@@ -60,6 +60,6 @@ def read_spectrum_from_canvas(image_data: np.ndarray) -> tuple[np.ndarray, np.nd
         if len(drawn_rows) > 0:
             intensity_px[x] = 1.0 - drawn_rows.min() / PLOT_H
 
-    wl        = np.arange(WL_MIN, WL_MAX + 1, 5)
+    wl        = np.arange(WL_MIN, WL_MAX + 1, 1)
     intensity = np.interp(wl, wavelengths_px, intensity_px)
     return (wl, intensity) if intensity.max() > 0 else None
