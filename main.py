@@ -6,7 +6,7 @@ import streamlit as st
 import torch
 
 from canvas import make_background, read_spectrum_from_canvas, CANVAS_WIDTH, CANVAS_HEIGHT
-from diagrams import make_cie_diagram, make_spectrum_bar_chart, make_color_vector_diagram, make_cri_ri_chart, make_rf_individual_chart
+from diagrams import format_cct, make_cie_diagram, make_spectrum_bar_chart, make_color_vector_diagram, make_cri_ri_chart, make_rf_individual_chart
 from model import ConditionalVAE, LATENT_DIM, MODEL_PATH
 from spectrum import WL_MIN, WL_MAX, spectrum_to_xy, spectrum_to_cri, spectrum_to_cri_ri, spectrum_to_duv, spectrum_to_tm30, gaussian_spectrum
 from streamlit_drawable_canvas import st_canvas
@@ -221,7 +221,7 @@ def generate_mode():
 
     cct = st.number_input("Docelowa CCT (K)", min_value=100, max_value=100000, value=4000, step=100)
     if not (1630 <= cct <= 18273):
-        st.warning("CCT poza zakresem treningowym (1630–18273 K). Wyniki mogą być niewiarygodne.")
+        st.warning("CCT poza zakresem treningowym (1630–18 273 K). Wyniki mogą być niewiarygodne.")
 
     if st.button("Nowa próbka"):
         st.session_state.gen_z = ConditionalVAE.sample_z()
@@ -246,7 +246,7 @@ def generate_mode():
         deviation = abs(actual_cct - cct) / cct
         if deviation > 0.2:
             st.warning(
-                f"Wygenerowane widmo ma CCT ≈ {fmt_num(actual_cct, 0)} K (żądano {fmt_num(cct, 0)} K). "
+                f"Wygenerowane widmo ma CCT ≈ {format_cct(actual_cct)} (żądano {format_cct(cct)}). "
                 "Spróbuj zmniejszyć Różnorodność lub kliknij Nowa próbka."
             )
     except Exception:

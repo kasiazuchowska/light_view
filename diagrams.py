@@ -68,9 +68,10 @@ def _add_planckian_locus(fig: go.Figure) -> None:
     ))
 
 
-def _format_cct(T: int) -> str:
+def format_cct(T: float) -> str:
     """Polish style: '2700 K', '10 000 K' (thousands space only from 5 digits up)."""
-    return (f"{T:,}".replace(",", " ") if T >= 10000 else str(T)) + " K"
+    T = int(round(T))
+    return (f"{T:,}".replace(",", " ") if abs(T) >= 10000 else str(T)) + " K"
 
 
 def _add_isothermal_ticks(fig: go.Figure) -> None:
@@ -81,7 +82,7 @@ def _add_isothermal_ticks(fig: go.Figure) -> None:
         xy_T = colour.temperature.CCT_to_xy_Kang2002(np.array([T]))[0]
         if T in labelled:
             fig.add_annotation(
-                x=xy_T[0], y=xy_T[1], text=_format_cct(T),
+                x=xy_T[0], y=xy_T[1], text=format_cct(T),
                 showarrow=False, font=dict(size=8, color="#333333"),
                 xshift=6, yshift=-10,
             )
@@ -129,7 +130,7 @@ def _add_chromaticity_point(fig: go.Figure, cx: float, cy: float) -> tuple[str, 
 
     try:
         cct_h = colour.temperature.xy_to_CCT_Hernandez1999(xy)
-        hernandez_label = f"{cct_h:.0f} K"
+        hernandez_label = format_cct(cct_h)
         cct_xy = colour.temperature.CCT_to_xy_Kang2002(np.array([float(np.clip(cct_h, 1667, 20000))]))[0]
         fig.add_trace(go.Scatter(
             x=[cx, cct_xy[0]], y=[cy, cct_xy[1]],
@@ -150,7 +151,7 @@ def _add_chromaticity_point(fig: go.Figure, cx: float, cy: float) -> tuple[str, 
 
     try:
         cct_m = colour.temperature.xy_to_CCT_McCamy1992(xy)
-        mccamy_label = f"{cct_m:.0f} K"
+        mccamy_label = format_cct(cct_m)
         cct_xy = colour.temperature.CCT_to_xy_Kang2002(np.array([float(np.clip(cct_m, 1667, 20000))]))[0]
         fig.add_trace(go.Scatter(
             x=[cx, cct_xy[0]], y=[cy, cct_xy[1]],
