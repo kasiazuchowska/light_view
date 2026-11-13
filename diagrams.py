@@ -77,14 +77,22 @@ def format_cct(T: float) -> str:
 def _add_isothermal_ticks(fig: go.Figure) -> None:
     tick_len_uv = 0.015
     dT          = 100
-    labelled    = {2000, 3000, 4000, 6500, 10000}  # subset, so labels do not overlap
+    # Labelled subset with per-label offsets, so labels do not overlap;
+    # 10 000 K goes above-left of the locus to stay clear of 6500 K
+    labels      = {
+        2000:  dict(xshift=6, yshift=-10),
+        3000:  dict(xshift=6, yshift=-10),
+        4000:  dict(xshift=6, yshift=-10),
+        6500:  dict(xshift=6, yshift=-10),
+        10000: dict(xshift=-6, yshift=10, xanchor="right"),
+    }
     for T in [2000, 2700, 3000, 4000, 5000, 6500, 10000]:
         xy_T = colour.temperature.CCT_to_xy_Kang2002(np.array([T]))[0]
-        if T in labelled:
+        if T in labels:
             fig.add_annotation(
                 x=xy_T[0], y=xy_T[1], text=format_cct(T),
                 showarrow=False, font=dict(size=8, color="#333333"),
-                xshift=6, yshift=-10,
+                **labels[T],
             )
         uv_lo    = xy_to_uv(colour.temperature.CCT_to_xy_Kang2002(np.array([max(1667, T - dT)]))[0])
         uv_hi    = xy_to_uv(colour.temperature.CCT_to_xy_Kang2002(np.array([min(20000, T + dT)]))[0])
@@ -209,7 +217,11 @@ def make_color_vector_diagram(tm30_spec) -> go.Figure | None:
     ref_avg  = np.array(tm30_spec.averages_reference)   # (16, 2)  a′, b′ (CAM02-UCS)
     test_avg = np.array(tm30_spec.averages_test)         # (16, 2)
 
-    ref_r = float(np.mean(np.sqrt(ref_avg[:, 0] ** 2 + ref_avg[:, 1] ** 2)))
+    # TM-30-18 normalisation: reference on the unit circle (at the reference hue angle),
+    # test = reference + (test - reference) / |reference|
+    ref_norm  = np.linalg.norm(ref_avg, axis=1, keepdims=True)
+    ref_unit  = ref_avg / ref_norm
+    test_unit = ref_unit + (test_avg - ref_avg) / ref_norm
     theta = np.linspace(0, 2 * np.pi, 200)
 
     hue_colors = [
@@ -219,16 +231,17 @@ def make_color_vector_diagram(tm30_spec) -> go.Figure | None:
 
     fig = go.Figure()
 
-    fig.add_trace(go.Scatter(
-        x=ref_r * np.cos(theta), y=ref_r * np.sin(theta),
-        mode="lines",
-        line=dict(color="#aaaaaa", width=1, dash="dash"),
-        showlegend=False, hoverinfo="skip",
-    ))
+    for r, dash, color in [(0.8, "dot", "#cccccc"), (1.2, "dot", "#cccccc"), (1.0, "dash", "#888888")]:
+        fig.add_trace(go.Scatter(
+            x=r * np.cos(theta), y=r * np.sin(theta),
+            mode="lines",
+            line=dict(color=color, width=1, dash=dash),
+            showlegend=False, hoverinfo="skip",
+        ))
 
     for i in range(16):
-        u_ref,  v_ref  = ref_avg[i, 0],  ref_avg[i, 1]
-        u_test, v_test = test_avg[i, 0], test_avg[i, 1]
+        u_ref,  v_ref  = ref_unit[i, 0],  ref_unit[i, 1]
+        u_test, v_test = test_unit[i, 0], test_unit[i, 1]
         color = hue_colors[i]
 
         fig.add_annotation(
@@ -251,8 +264,8 @@ def make_color_vector_diagram(tm30_spec) -> go.Figure | None:
         ))
 
     fig.update_layout(
-        xaxis=dict(title="a′", scaleanchor="y", scaleratio=1, zeroline=True, zerolinewidth=1, zerolinecolor="#cccccc"),
-        yaxis=dict(title="b′", zeroline=True, zerolinewidth=1, zerolinecolor="#cccccc"),
+        xaxis=dict(title="a′", range=[-1.5, 1.5], scaleanchor="y", scaleratio=1, zeroline=True, zerolinewidth=1, zerolinecolor="#cccccc"),
+        yaxis=dict(title="b′", range=[-1.5, 1.5], zeroline=True, zerolinewidth=1, zerolinecolor="#cccccc"),
         plot_bgcolor="white",
         margin=dict(t=20),
     )

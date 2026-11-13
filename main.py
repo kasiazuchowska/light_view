@@ -17,6 +17,12 @@ def fmt_num(value: float, decimals: int) -> str:
     return f"{value:.{decimals}f}".replace(".", ",")
 
 
+def show_values(items: list[tuple[str, str]]) -> None:
+    """Show labelled values side by side, one st.metric per column."""
+    for col, (label, value) in zip(st.columns(len(items)), items):
+        col.metric(label, value)
+
+
 def spectrum_to_text(wl: np.ndarray, intensity: np.ndarray) -> str:
     wl_1nm = np.arange(WL_MIN, WL_MAX + 1, 1, dtype=float)
     intensity_1nm = np.interp(wl_1nm, wl, intensity)
@@ -41,12 +47,13 @@ def render_results(wl, intensity):
     fig_cie, hernandez_label, mccamy_label = make_cie_diagram(cx, cy)
 
     st.subheader("Chromatyczność CIE 1931")
-    st.write(
-        f"**x** = {fmt_num(cx, 4)} &nbsp;&nbsp; **y** = {fmt_num(cy, 4)}"
-        f"&nbsp;&nbsp;&nbsp; **CCT (Hernández-Andrés 1999)** ≈ {hernandez_label}"
-        f"&nbsp;&nbsp; **CCT (McCamy 1992)** ≈ {mccamy_label}"
-        f"&nbsp;&nbsp;&nbsp; **Duv** = {duv_label}"
-    )
+    show_values([
+        ("x", fmt_num(cx, 4)),
+        ("y", fmt_num(cy, 4)),
+        ("CCT (Hernández-Andrés 1999)", hernandez_label),
+        ("CCT (McCamy 1992)", mccamy_label),
+        ("Duv", duv_label),
+    ])
     st.plotly_chart(fig_cie, width='stretch', height=550)
 
     cri = spectrum_to_cri(wl, intensity)
@@ -57,11 +64,11 @@ def render_results(wl, intensity):
     rg_label  = fmt_num(tm30.R_g, 0) if tm30 is not None else "b.d."
     fig_cvg = make_color_vector_diagram(tm30)
     st.subheader("Oddawanie barw")
-    st.write(
-        f"**CRI (Ra)** = {cri_label}"
-        f"&nbsp;&nbsp;&nbsp; **Rf (TM-30)** = {rf_label}"
-        f"&nbsp;&nbsp; **Rg (TM-30)** = {rg_label}"
-    )
+    show_values([
+        ("CRI (Ra)", cri_label),
+        ("Rf (TM-30)", rf_label),
+        ("Rg (TM-30)", rg_label),
+    ])
     if cri is not None and cri_ri is not None:
         st.markdown("**CRI – wartości szczegółowe R1–R14**")
         st.plotly_chart(make_cri_ri_chart(cri_ri, cri), width='stretch', height=350)
