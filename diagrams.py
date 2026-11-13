@@ -68,16 +68,23 @@ def _add_planckian_locus(fig: go.Figure) -> None:
     ))
 
 
+def _format_cct(T: int) -> str:
+    """Polish style: '2700 K', '10 000 K' (thousands space only from 5 digits up)."""
+    return (f"{T:,}".replace(",", " ") if T >= 10000 else str(T)) + " K"
+
+
 def _add_isothermal_ticks(fig: go.Figure) -> None:
     tick_len_uv = 0.015
     dT          = 100
+    labelled    = {2000, 3000, 4000, 6500, 10000}  # subset, so labels do not overlap
     for T in [2000, 2700, 3000, 4000, 5000, 6500, 10000]:
         xy_T = colour.temperature.CCT_to_xy_Kang2002(np.array([T]))[0]
-        fig.add_annotation(
-            x=xy_T[0], y=xy_T[1], text=f"{T}K",
-            showarrow=False, font=dict(size=8, color="#333333"),
-            xshift=6, yshift=-10,
-        )
+        if T in labelled:
+            fig.add_annotation(
+                x=xy_T[0], y=xy_T[1], text=_format_cct(T),
+                showarrow=False, font=dict(size=8, color="#333333"),
+                xshift=6, yshift=-10,
+            )
         uv_lo    = xy_to_uv(colour.temperature.CCT_to_xy_Kang2002(np.array([max(1667, T - dT)]))[0])
         uv_hi    = xy_to_uv(colour.temperature.CCT_to_xy_Kang2002(np.array([min(20000, T + dT)]))[0])
         tangent  = uv_hi - uv_lo
@@ -198,7 +205,7 @@ def make_color_vector_diagram(tm30_spec) -> go.Figure | None:
     if tm30_spec is None:
         return None
 
-    ref_avg  = np.array(tm30_spec.averages_reference)   # (16, 2)  U*, V*
+    ref_avg  = np.array(tm30_spec.averages_reference)   # (16, 2)  a′, b′ (CAM02-UCS)
     test_avg = np.array(tm30_spec.averages_test)         # (16, 2)
 
     ref_r = float(np.mean(np.sqrt(ref_avg[:, 0] ** 2 + ref_avg[:, 1] ** 2)))
@@ -243,12 +250,22 @@ def make_color_vector_diagram(tm30_spec) -> go.Figure | None:
         ))
 
     fig.update_layout(
-        xaxis=dict(title="U*", scaleanchor="y", scaleratio=1, zeroline=True, zerolinewidth=1, zerolinecolor="#cccccc"),
-        yaxis=dict(title="V*", zeroline=True, zerolinewidth=1, zerolinecolor="#cccccc"),
+        xaxis=dict(title="a′", scaleanchor="y", scaleratio=1, zeroline=True, zerolinewidth=1, zerolinecolor="#cccccc"),
+        yaxis=dict(title="b′", zeroline=True, zerolinewidth=1, zerolinecolor="#cccccc"),
         plot_bgcolor="white",
         margin=dict(t=20),
     )
     return _use_decimal_comma(fig)
+
+
+def _add_reference_line(fig: go.Figure, y: float, text: str) -> None:
+    """Dashed horizontal line labelled to the right of the plot area, clear of the bars."""
+    fig.add_hline(y=y, line=dict(color="#333333", width=1.5, dash="dash"))
+    fig.add_annotation(
+        x=1, xref="paper", xanchor="left", xshift=4,
+        y=y, yref="y", text=text, showarrow=False,
+    )
+    fig.update_layout(margin=dict(r=90))
 
 
 # Approximate sRGB colors for CIE TCS01–TCS14
@@ -286,8 +303,7 @@ def make_cri_ri_chart(ri_values: dict[int, float], ra: float) -> go.Figure:
         hovertemplate="%{x}: %{y:.1f}<extra></extra>",
         showlegend=False,
     ))
-    fig.add_hline(y=ra, line=dict(color="#333333", width=1.5, dash="dash"),
-                  annotation_text=f"Ra = {ra:.0f}", annotation_position="top right")
+    _add_reference_line(fig, ra, f"Ra = {ra:.0f}")
     fig.update_layout(
         xaxis_title="Próbka barwna (TCS)",
         yaxis_title="Wartość CRI",
@@ -310,8 +326,7 @@ def make_rf_individual_chart(r_s: np.ndarray) -> go.Figure:
         marker_line_width=0,
         hovertemplate="CES %{x}: Rf = %{y:.1f}<extra></extra>",
     ))
-    fig.add_hline(y=float(np.mean(r_s)), line=dict(color="#333333", width=1.5, dash="dash"),
-                  annotation_text=f"średnia = {float(np.mean(r_s)):.0f}", annotation_position="top right")
+    _add_reference_line(fig, float(np.mean(r_s)), f"średnia = {float(np.mean(r_s)):.0f}")
     fig.update_layout(
         xaxis_title="Próbka oceny barw (CES)",
         yaxis_title="Rf szczegółowe",

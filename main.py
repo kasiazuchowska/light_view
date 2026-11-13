@@ -36,7 +36,8 @@ def render_results(wl, intensity):
     )
     cx, cy = spectrum_to_xy(wl, intensity)
     duv = spectrum_to_duv(wl, intensity)
-    duv_label = fmt_num(duv, 4) if duv is not None else "b.d."
+    # CCT/Duv are only meaningful within |Duv| <= 0.05 (CIE)
+    duv_label = fmt_num(duv, 4) if duv is not None and abs(duv) <= 0.05 else "b.d."
     fig_cie, hernandez_label, mccamy_label = make_cie_diagram(cx, cy)
 
     st.subheader("Chromatyczność CIE 1931")
@@ -120,12 +121,12 @@ def peaks_mode():
     with st.form("add_peak", clear_on_submit=True):
         c1, c2, c3, c4 = st.columns([2, 2, 2, 1])
         with c1:
-            center = st.number_input("Środek (nm)", min_value=float(WL_MIN), max_value=float(WL_MAX),
-                                     value=450.0, step=1.0)
+            center = st.number_input("Środek (nm)", min_value=WL_MIN, max_value=WL_MAX,
+                                     value=450, step=1, format="%d")
         with c2:
-            height = st.number_input("Wysokość (0–1)", min_value=0.0, max_value=1.0, value=1.0, step=0.05)
+            height = st.number_input("Wysokość (0–1)", min_value=0.0, max_value=1.0, value=1.0, step=0.05, format="%.2f")
         with c3:
-            fwhm = st.number_input("FWHM (nm)", min_value=1.0, max_value=400.0, value=25.0, step=1.0)
+            fwhm = st.number_input("FWHM (nm)", min_value=1, max_value=400, value=25, step=1, format="%d")
         with c4:
             st.write("")
             submitted = st.form_submit_button("Dodaj pik", width='stretch')

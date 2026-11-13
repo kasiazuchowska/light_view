@@ -89,6 +89,7 @@ def spectrum_to_duv(wl_nm: np.ndarray, intensity: np.ndarray) -> float | None:
         uv = xy_to_uv(np.array(spectrum_to_xy(wl_nm, intensity)))
         cct = float(np.clip(colour.temperature.uv_to_CCT_Robertson1968(uv)[0], 1667, 20000))
         uv_planck = xy_to_uv(colour.temperature.CCT_to_xy_Kang2002(np.array([cct]))[0])
-        return float(np.linalg.norm(uv - uv_planck))
+        # Signed: positive above the Planckian locus (v > v_p), negative below
+        return float(np.sign(uv[1] - uv_planck[1]) * np.linalg.norm(uv - uv_planck))
     except Exception:
         return None
