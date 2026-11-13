@@ -57,7 +57,7 @@ def _add_planckian_locus(fig: go.Figure) -> None:
         x=pl_xy[:, 0], y=pl_xy[:, 1],
         mode="lines",
         line=dict(color="#333333", width=1.5),
-        name="Planckian locus",
+        name="Krzywa Plancka",
         hoverinfo="skip",
     ))
 
@@ -99,8 +99,8 @@ def _duv(xy: np.ndarray) -> float:
 def _add_chromaticity_point(fig: go.Figure, cx: float, cy: float) -> tuple[str, str]:
     """Add the user's chromaticity point and CCT connections. Returns (hernandez_label, mccamy_label)."""
     xy = np.array([cx, cy])
-    hernandez_label = "n/a"
-    mccamy_label = "n/a"
+    hernandez_label = "b.d."
+    mccamy_label = "b.d."
 
     near_locus = _duv(xy) <= 0.05
 
@@ -109,7 +109,7 @@ def _add_chromaticity_point(fig: go.Figure, cx: float, cy: float) -> tuple[str, 
             x=[cx], y=[cy],
             mode="markers",
             marker=dict(size=8, color="white", line=dict(color="black", width=2)),
-            name="Your spectrum",
+            name="Twoje widmo",
             hovertemplate=f"x={cx:.4f}<br>y={cy:.4f}<extra></extra>",
         ))
         return hernandez_label, mccamy_label
@@ -160,7 +160,7 @@ def _add_chromaticity_point(fig: go.Figure, cx: float, cy: float) -> tuple[str, 
         x=[cx], y=[cy],
         mode="markers",
         marker=dict(size=8, color="white", line=dict(color="black", width=2)),
-        name="Your spectrum",
+        name="Twoje widmo",
         hovertemplate=f"x={cx:.4f}<br>y={cy:.4f}<extra></extra>",
     ))
     return hernandez_label, mccamy_label
@@ -229,7 +229,7 @@ def make_color_vector_diagram(tm30_spec) -> go.Figure | None:
             text=[str(i + 1)], textposition="top center",
             textfont=dict(size=8),
             showlegend=False,
-            hovertemplate=f"Bin {i + 1}<br>ref ({u_ref:.2f}, {v_ref:.2f})<br>test ({u_test:.2f}, {v_test:.2f})<extra></extra>",
+            hovertemplate=f"Przedział {i + 1}<br>ref ({u_ref:.2f}, {v_ref:.2f})<br>test ({u_test:.2f}, {v_test:.2f})<extra></extra>",
         ))
 
     fig.update_layout(
@@ -279,8 +279,8 @@ def make_cri_ri_chart(ri_values: dict[int, float], ra: float) -> go.Figure:
     fig.add_hline(y=ra, line=dict(color="#333333", width=1.5, dash="dash"),
                   annotation_text=f"Ra = {ra:.0f}", annotation_position="top right")
     fig.update_layout(
-        xaxis_title="Test Colour Sample",
-        yaxis_title="CRI value",
+        xaxis_title="Próbka barwna (TCS)",
+        yaxis_title="Wartość CRI",
         plot_bgcolor="white",
         margin=dict(t=20),
         bargap=0.2,
@@ -301,10 +301,10 @@ def make_rf_individual_chart(r_s: np.ndarray) -> go.Figure:
         hovertemplate="CES %{x}: Rf = %{y:.1f}<extra></extra>",
     ))
     fig.add_hline(y=float(np.mean(r_s)), line=dict(color="#333333", width=1.5, dash="dash"),
-                  annotation_text=f"mean = {float(np.mean(r_s)):.0f}", annotation_position="top right")
+                  annotation_text=f"średnia = {float(np.mean(r_s)):.0f}", annotation_position="top right")
     fig.update_layout(
-        xaxis_title="Color Evaluation Sample (CES)",
-        yaxis_title="Rf individual",
+        xaxis_title="Próbka oceny barw (CES)",
+        yaxis_title="Rf szczegółowe",
         plot_bgcolor="white",
         margin=dict(t=20),
         bargap=0,
@@ -316,8 +316,8 @@ def make_spectrum_bar_chart(wl: np.ndarray, intensity: np.ndarray) -> go.Figure:
     colors = [wavelength_to_rgb(w) for w in wl]
     fig    = go.Figure(go.Bar(x=wl, y=intensity, marker_color=colors, marker_line_width=0))
     fig.update_layout(
-        xaxis_title="Wavelength (nm)",
-        yaxis_title="Relative intensity",
+        xaxis_title="Długość fali (nm)",
+        yaxis_title="Natężenie względne",
         yaxis_range=[0, 1.1],
         bargap=0,
         plot_bgcolor="white",

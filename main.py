@@ -24,17 +24,17 @@ def spectrum_to_text(wl: np.ndarray, intensity: np.ndarray) -> str:
 def render_results(wl, intensity):
     st.plotly_chart(make_spectrum_bar_chart(wl, intensity), width='stretch', height=400)
     st.download_button(
-        label="Export spectrum (TXT)",
+        label="Eksportuj widmo (TXT)",
         data=spectrum_to_text(wl, intensity),
         file_name="spectrum.txt",
         mime="text/plain",
     )
     cx, cy = spectrum_to_xy(wl, intensity)
     duv = spectrum_to_duv(wl, intensity)
-    duv_label = f"{duv:.4f}" if duv is not None else "n/a"
+    duv_label = f"{duv:.4f}" if duv is not None else "b.d."
     fig_cie, hernandez_label, mccamy_label = make_cie_diagram(cx, cy)
 
-    st.subheader("CIE 1931 Chromaticity")
+    st.subheader("Chromatyczność CIE 1931")
     st.write(
         f"**x** = {cx:.4f} &nbsp;&nbsp; **y** = {cy:.4f}"
         f"&nbsp;&nbsp;&nbsp; **CCT (Hernandez 1999)** ≈ {hernandez_label}"
@@ -46,21 +46,21 @@ def render_results(wl, intensity):
     cri = spectrum_to_cri(wl, intensity)
     cri_ri = spectrum_to_cri_ri(wl, intensity)
     tm30 = spectrum_to_tm30(wl, intensity)
-    cri_label = f"{cri:.0f}" if cri is not None else "n/a"
-    rf_label  = f"{tm30.R_f:.0f}" if tm30 is not None else "n/a"
-    rg_label  = f"{tm30.R_g:.0f}" if tm30 is not None else "n/a"
+    cri_label = f"{cri:.0f}" if cri is not None else "b.d."
+    rf_label  = f"{tm30.R_f:.0f}" if tm30 is not None else "b.d."
+    rg_label  = f"{tm30.R_g:.0f}" if tm30 is not None else "b.d."
     fig_cvg = make_color_vector_diagram(tm30)
-    st.subheader("Color Rendering")
+    st.subheader("Oddawanie barw")
     st.write(
         f"**CRI (Ra)** = {cri_label}"
         f"&nbsp;&nbsp;&nbsp; **Rf (TM-30)** = {rf_label}"
         f"&nbsp;&nbsp; **Rg (TM-30)** = {rg_label}"
     )
     if cri is not None and cri_ri is not None:
-        st.markdown("**CRI – individual values R1–R14**")
+        st.markdown("**CRI – wartości szczegółowe R1–R14**")
         st.plotly_chart(make_cri_ri_chart(cri_ri, cri), width='stretch', height=350)
     if tm30 is not None and tm30.R_s is not None and len(tm30.R_s) > 0:
-        st.markdown("**TM-30 – individual fidelity Rf1–Rf99**")
+        st.markdown("**TM-30 – wierność szczegółowa Rf1–Rf99**")
         st.plotly_chart(make_rf_individual_chart(tm30.R_s), width='stretch', height=350)
     if fig_cvg is not None:
         st.plotly_chart(fig_cvg, width='stretch', height=500)
@@ -72,10 +72,10 @@ def draw_mode():
 
     col1, col2 = st.columns([3, 1])
     with col1:
-        stroke_width = st.slider("Brush size", 2, 20, 8)
+        stroke_width = st.slider("Rozmiar pędzla", 2, 20, 8)
     with col2:
         st.write("")
-        if st.button("Clear canvas", width='stretch'):
+        if st.button("Wyczyść płótno", width='stretch'):
             st.session_state.canvas_key += 1
 
     st.markdown(
@@ -101,45 +101,45 @@ def draw_mode():
         if spectrum:
             render_results(*spectrum)
         else:
-            st.info("Draw something on the canvas to see the spectrum.")
+            st.info("Narysuj coś na płótnie, aby zobaczyć widmo.")
     else:
-        st.info("Draw something on the canvas to see the spectrum.")
+        st.info("Narysuj coś na płótnie, aby zobaczyć widmo.")
 
 
 def peaks_mode():
     if "peaks" not in st.session_state:
         st.session_state.peaks = []
 
-    st.write("Define each peak by its center wavelength, peak height, and FWHM (full width at half maximum).")
+    st.write("Zdefiniuj każdy pik przez długość fali środka, wysokość i FWHM (szerokość połówkową).")
 
     with st.form("add_peak", clear_on_submit=True):
         c1, c2, c3, c4 = st.columns([2, 2, 2, 1])
         with c1:
-            center = st.number_input("Center (nm)", min_value=float(WL_MIN), max_value=float(WL_MAX),
+            center = st.number_input("Środek (nm)", min_value=float(WL_MIN), max_value=float(WL_MAX),
                                      value=450.0, step=1.0)
         with c2:
-            height = st.number_input("Height (0–1)", min_value=0.0, max_value=1.0, value=1.0, step=0.05)
+            height = st.number_input("Wysokość (0–1)", min_value=0.0, max_value=1.0, value=1.0, step=0.05)
         with c3:
             fwhm = st.number_input("FWHM (nm)", min_value=1.0, max_value=400.0, value=25.0, step=1.0)
         with c4:
             st.write("")
-            submitted = st.form_submit_button("Add peak", width='stretch')
+            submitted = st.form_submit_button("Dodaj pik", width='stretch')
 
     if submitted:
         st.session_state.peaks.append({"center": center, "height": height, "fwhm": fwhm})
 
     if st.session_state.peaks:
-        st.write("**Peaks:**")
+        st.write("**Piki:**")
         for i, p in enumerate(st.session_state.peaks):
             col_desc, col_del = st.columns([5, 1])
             with col_desc:
-                st.write(f"Peak {i+1}: center={p['center']:.0f} nm, height={p['height']:.2f}, FWHM={p['fwhm']:.0f} nm")
+                st.write(f"Pik {i+1}: środek={p['center']:.0f} nm, wysokość={p['height']:.2f}, FWHM={p['fwhm']:.0f} nm")
             with col_del:
-                if st.button("Remove", key=f"del_{i}"):
+                if st.button("Usuń", key=f"del_{i}"):
                     st.session_state.peaks.pop(i)
                     st.rerun()
 
-        if st.button("Clear all peaks"):
+        if st.button("Usuń wszystkie piki"):
             st.session_state.peaks = []
             st.rerun()
 
@@ -147,13 +147,13 @@ def peaks_mode():
         if spectrum:
             render_results(*spectrum)
     else:
-        st.info("Add at least one peak to see the spectrum.")
+        st.info("Dodaj co najmniej jeden pik, aby zobaczyć widmo.")
 
 
 def import_mode():
-    uploaded = st.file_uploader("Upload a spectrum TXT file", type=["txt"])
+    uploaded = st.file_uploader("Wczytaj plik TXT z widmem", type=["txt"])
     if uploaded is None:
-        st.info("Upload a TXT file with two columns: wavelength_nm and intensity.")
+        st.info("Wczytaj plik TXT z dwiema kolumnami: wavelength_nm i intensity.")
         return
 
     try:
@@ -169,7 +169,7 @@ def import_mode():
             rows.append((float(parts[0]), float(parts[1])))
 
         if not rows:
-            st.error("No data rows found in file.")
+            st.error("Nie znaleziono danych w pliku.")
             return
 
         wl_raw = np.array([r[0] for r in rows])
@@ -177,7 +177,7 @@ def import_mode():
 
         mask = (wl_raw >= WL_MIN) & (wl_raw <= WL_MAX)
         if not mask.any():
-            st.error(f"No data in the {WL_MIN}–{WL_MAX} nm range.")
+            st.error(f"Brak danych w zakresie {WL_MIN}–{WL_MAX} nm.")
             return
         wl_raw, intensity_raw = wl_raw[mask], intensity_raw[mask]
         order = np.argsort(wl_raw)
@@ -188,13 +188,13 @@ def import_mode():
         intensity = np.interp(wl, wl_sorted, intensity_sorted)
 
         if intensity.max() <= 0:
-            st.error("All intensity values are zero.")
+            st.error("Wszystkie wartości natężenia są równe zero.")
             return
 
         render_results(wl, intensity)
 
     except Exception as e:
-        st.error(f"Could not parse file: {e}")
+        st.error(f"Nie udało się odczytać pliku: {e}")
 
 
 @st.cache_resource
@@ -210,23 +210,23 @@ def _load_model() -> ConditionalVAE | None:
 def generate_mode():
     model = _load_model()
     if model is None:
-        st.warning("No trained model found. Run `python train.py` from the project directory first.")
+        st.warning("Nie znaleziono wytrenowanego modelu. Najpierw uruchom `python train.py` w katalogu projektu.")
         return
 
-    cct = st.number_input("Target CCT (K)", min_value=100, max_value=100000, value=4000, step=100)
+    cct = st.number_input("Docelowa CCT (K)", min_value=100, max_value=100000, value=4000, step=100)
     if not (1630 <= cct <= 18273):
-        st.warning("CCT is outside the training range (1630–18273 K). Results may be unreliable.")
+        st.warning("CCT poza zakresem treningowym (1630–18273 K). Wyniki mogą być niewiarygodne.")
 
-    if st.button("New sample"):
+    if st.button("Nowa próbka"):
         st.session_state.gen_z = ConditionalVAE.sample_z()
 
     if "gen_z" not in st.session_state:
         st.session_state.gen_z = ConditionalVAE.sample_z()
 
     temperature = st.slider(
-        "Diversity", min_value=0.0, max_value=2.0, value=1.0, step=0.05,
-        help="0 = always the same average spectrum for this CCT. "
-             "Higher = more varied / unusual shapes.",
+        "Różnorodność", min_value=0.0, max_value=2.0, value=1.0, step=0.05,
+        help="0 = zawsze to samo uśrednione widmo dla tej CCT. "
+             "Wyżej = bardziej zróżnicowane / nietypowe kształty.",
     )
 
     wl = np.arange(WL_MIN, WL_MAX + 1, 1, dtype=float)
@@ -240,8 +240,8 @@ def generate_mode():
         deviation = abs(actual_cct - cct) / cct
         if deviation > 0.2:
             st.warning(
-                f"Generated spectrum has CCT ≈ {actual_cct:.0f} K (requested {cct:.0f} K). "
-                "Try reducing Diversity or clicking New sample."
+                f"Wygenerowane widmo ma CCT ≈ {actual_cct:.0f} K (żądano {cct:.0f} K). "
+                "Spróbuj zmniejszyć Różnorodność lub kliknij Nowa próbka."
             )
     except Exception:
         pass
@@ -250,11 +250,11 @@ def generate_mode():
 
 
 def main():
-    st.title("Light Spectrum Analyzer")
-    mode = st.radio("Input mode", ["Draw", "Peaks", "Import", "Generate"], horizontal=True)
-    if mode == "Draw":
+    st.title("Analiza widmowa źródeł światła")
+    mode = st.radio("Tryb wprowadzania", ["Rysuj", "Piki", "Import", "Generuj"], horizontal=True)
+    if mode == "Rysuj":
         draw_mode()
-    elif mode == "Peaks":
+    elif mode == "Piki":
         peaks_mode()
     elif mode == "Import":
         import_mode()
