@@ -38,7 +38,7 @@ def make_background() -> Image.Image:
         y = int((1.0 - val) * PLOT_H)
         draw.line([(MARGIN_LEFT, y), (MARGIN_LEFT + PLOT_W, y)], fill="#dddddd", width=1)
         draw.line([(MARGIN_LEFT - 5, y), (MARGIN_LEFT, y)], fill="#888888", width=1)
-        label = f"{val:.2f}"
+        label = f"{val:.2f}".replace(".", ",")
         bbox  = draw.textbbox((0, 0), label, font=font)
         tw    = bbox[2] - bbox[0]
         draw.text((MARGIN_LEFT - tw - 7, y - 6), label, fill="#444444", font=font)

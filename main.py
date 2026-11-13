@@ -12,6 +12,11 @@ from spectrum import WL_MIN, WL_MAX, spectrum_to_xy, spectrum_to_cri, spectrum_t
 from streamlit_drawable_canvas import st_canvas
 
 
+def fmt_num(value: float, decimals: int) -> str:
+    """Format a number for display with a decimal comma (e.g. 0,3127)."""
+    return f"{value:.{decimals}f}".replace(".", ",")
+
+
 def spectrum_to_text(wl: np.ndarray, intensity: np.ndarray) -> str:
     wl_1nm = np.arange(WL_MIN, WL_MAX + 1, 1, dtype=float)
     intensity_1nm = np.interp(wl_1nm, wl, intensity)
@@ -31,13 +36,13 @@ def render_results(wl, intensity):
     )
     cx, cy = spectrum_to_xy(wl, intensity)
     duv = spectrum_to_duv(wl, intensity)
-    duv_label = f"{duv:.4f}" if duv is not None else "b.d."
+    duv_label = fmt_num(duv, 4) if duv is not None else "b.d."
     fig_cie, hernandez_label, mccamy_label = make_cie_diagram(cx, cy)
 
     st.subheader("Chromatyczność CIE 1931")
     st.write(
-        f"**x** = {cx:.4f} &nbsp;&nbsp; **y** = {cy:.4f}"
-        f"&nbsp;&nbsp;&nbsp; **CCT (Hernandez 1999)** ≈ {hernandez_label}"
+        f"**x** = {fmt_num(cx, 4)} &nbsp;&nbsp; **y** = {fmt_num(cy, 4)}"
+        f"&nbsp;&nbsp;&nbsp; **CCT (Hernández-Andrés 1999)** ≈ {hernandez_label}"
         f"&nbsp;&nbsp; **CCT (McCamy 1992)** ≈ {mccamy_label}"
         f"&nbsp;&nbsp;&nbsp; **Duv** = {duv_label}"
     )
@@ -46,9 +51,9 @@ def render_results(wl, intensity):
     cri = spectrum_to_cri(wl, intensity)
     cri_ri = spectrum_to_cri_ri(wl, intensity)
     tm30 = spectrum_to_tm30(wl, intensity)
-    cri_label = f"{cri:.0f}" if cri is not None else "b.d."
-    rf_label  = f"{tm30.R_f:.0f}" if tm30 is not None else "b.d."
-    rg_label  = f"{tm30.R_g:.0f}" if tm30 is not None else "b.d."
+    cri_label = fmt_num(cri, 0) if cri is not None else "b.d."
+    rf_label  = fmt_num(tm30.R_f, 0) if tm30 is not None else "b.d."
+    rg_label  = fmt_num(tm30.R_g, 0) if tm30 is not None else "b.d."
     fig_cvg = make_color_vector_diagram(tm30)
     st.subheader("Oddawanie barw")
     st.write(
@@ -133,7 +138,7 @@ def peaks_mode():
         for i, p in enumerate(st.session_state.peaks):
             col_desc, col_del = st.columns([5, 1])
             with col_desc:
-                st.write(f"Pik {i+1}: środek={p['center']:.0f} nm, wysokość={p['height']:.2f}, FWHM={p['fwhm']:.0f} nm")
+                st.write(f"Pik {i+1}: środek={p['center']:.0f} nm, wysokość={fmt_num(p['height'], 2)}, FWHM={p['fwhm']:.0f} nm")
             with col_del:
                 if st.button("Usuń", key=f"del_{i}"):
                     st.session_state.peaks.pop(i)
@@ -240,7 +245,7 @@ def generate_mode():
         deviation = abs(actual_cct - cct) / cct
         if deviation > 0.2:
             st.warning(
-                f"Wygenerowane widmo ma CCT ≈ {actual_cct:.0f} K (żądano {cct:.0f} K). "
+                f"Wygenerowane widmo ma CCT ≈ {fmt_num(actual_cct, 0)} K (żądano {fmt_num(cct, 0)} K). "
                 "Spróbuj zmniejszyć Różnorodność lub kliknij Nowa próbka."
             )
     except Exception:

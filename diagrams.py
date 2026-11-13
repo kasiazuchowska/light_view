@@ -14,6 +14,12 @@ _denom     = _LOCUS_XYZ.sum(axis=1, keepdims=True)
 _LOCUS_XY  = _LOCUS_XYZ[:, :2] / np.where(_denom > 0, _denom, 1)
 
 
+def _use_decimal_comma(fig: go.Figure) -> go.Figure:
+    """Polish number format: decimal comma, space as thousands separator."""
+    fig.update_layout(separators=", ")
+    return fig
+
+
 # ---------------------------------------------------------------------------
 # CIE diagram helpers
 # ---------------------------------------------------------------------------
@@ -110,7 +116,7 @@ def _add_chromaticity_point(fig: go.Figure, cx: float, cy: float) -> tuple[str, 
             mode="markers",
             marker=dict(size=8, color="white", line=dict(color="black", width=2)),
             name="Twoje widmo",
-            hovertemplate=f"x={cx:.4f}<br>y={cy:.4f}<extra></extra>",
+            hovertemplate="x = %{x:.4f}<br>y = %{y:.4f}<extra></extra>",
         ))
         return hernandez_label, mccamy_label
 
@@ -122,7 +128,7 @@ def _add_chromaticity_point(fig: go.Figure, cx: float, cy: float) -> tuple[str, 
             x=[cx, cct_xy[0]], y=[cy, cct_xy[1]],
             mode="lines",
             line=dict(color="#1f77b4", width=1, dash="dot"),
-            name=f"Hernandez 1999 ({hernandez_label})",
+            name=f"Hernández-Andrés 1999 ({hernandez_label})",
             hoverinfo="skip",
         ))
         fig.add_trace(go.Scatter(
@@ -130,7 +136,7 @@ def _add_chromaticity_point(fig: go.Figure, cx: float, cy: float) -> tuple[str, 
             mode="markers",
             marker=dict(size=8, color="#1f77b4"),
             showlegend=False,
-            hovertemplate=f"Hernandez 1999<br>CCT = {hernandez_label}<extra></extra>",
+            hovertemplate=f"Hernández-Andrés 1999<br>CCT = {hernandez_label}<extra></extra>",
         ))
     except Exception:
         pass
@@ -161,7 +167,7 @@ def _add_chromaticity_point(fig: go.Figure, cx: float, cy: float) -> tuple[str, 
         mode="markers",
         marker=dict(size=8, color="white", line=dict(color="black", width=2)),
         name="Twoje widmo",
-        hovertemplate=f"x={cx:.4f}<br>y={cy:.4f}<extra></extra>",
+        hovertemplate="x = %{x:.4f}<br>y = %{y:.4f}<extra></extra>",
     ))
     return hernandez_label, mccamy_label
 
@@ -184,6 +190,7 @@ def make_cie_diagram(cx: float, cy: float) -> tuple[go.Figure, str]:
         showlegend=True,
         legend=dict(x=0.75, y=0.95),
     )
+    _use_decimal_comma(fig)
     return fig, hernandez_label, mccamy_label
 
 
@@ -228,8 +235,11 @@ def make_color_vector_diagram(tm30_spec) -> go.Figure | None:
             marker=dict(size=6, color=color, line=dict(color="white", width=1)),
             text=[str(i + 1)], textposition="top center",
             textfont=dict(size=8),
+            customdata=[[u_test, v_test]],
             showlegend=False,
-            hovertemplate=f"Przedział {i + 1}<br>ref ({u_ref:.2f}, {v_ref:.2f})<br>test ({u_test:.2f}, {v_test:.2f})<extra></extra>",
+            hovertemplate=f"Przedział {i + 1}"
+                          "<br>ref (%{x:.2f}; %{y:.2f})"
+                          "<br>test (%{customdata[0]:.2f}; %{customdata[1]:.2f})<extra></extra>",
         ))
 
     fig.update_layout(
@@ -238,7 +248,7 @@ def make_color_vector_diagram(tm30_spec) -> go.Figure | None:
         plot_bgcolor="white",
         margin=dict(t=20),
     )
-    return fig
+    return _use_decimal_comma(fig)
 
 
 # Approximate sRGB colors for CIE TCS01–TCS14
@@ -285,7 +295,7 @@ def make_cri_ri_chart(ri_values: dict[int, float], ra: float) -> go.Figure:
         margin=dict(t=20),
         bargap=0.2,
     )
-    return fig
+    return _use_decimal_comma(fig)
 
 
 def make_rf_individual_chart(r_s: np.ndarray) -> go.Figure:
@@ -309,7 +319,7 @@ def make_rf_individual_chart(r_s: np.ndarray) -> go.Figure:
         margin=dict(t=20),
         bargap=0,
     )
-    return fig
+    return _use_decimal_comma(fig)
 
 
 def make_spectrum_bar_chart(wl: np.ndarray, intensity: np.ndarray) -> go.Figure:
@@ -323,4 +333,4 @@ def make_spectrum_bar_chart(wl: np.ndarray, intensity: np.ndarray) -> go.Figure:
         plot_bgcolor="white",
         margin=dict(t=20),
     )
-    return fig
+    return _use_decimal_comma(fig)
