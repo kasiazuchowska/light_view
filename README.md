@@ -75,11 +75,21 @@ uv run python train.py
 ```
 
 Dane są dzielone losowo (ziarno 42) na zbiór treningowy (85%) i testowy (15%); model jest
-trenowany wyłącznie na zbiorze treningowym. Skrypt tworzy:
+trenowany wyłącznie na zbiorze treningowym.
+
+Funkcja straty składa się z trzech członów: błędu rekonstrukcji (MSE), dywergencji KL
+z wagą β oraz członu zgodności CCT z wagą λ_CCT. Człon CCT dotyczy widm generowanych
+z rozkładu a priori dla losowych zadanych CCT: ich CCT jest liczona różniczkowalnie
+(funkcje dopasowania barw CIE 1931 2°, wzór McCamy'ego) i porównywana z zadaną (MSE
+w znormalizowanej skali logarytmicznej). Obie wagi rosną liniowo od 0 przez pierwsze
+100 epok, do β = 0,01 i λ_CCT = 1.
+
+Skrypt tworzy:
 
 - `model.pt` – wagi wytrenowanego modelu,
-- `training_log.csv` – przebieg treningu: dla każdej epoki waga β oraz średnia strata
-  całkowita, rekonstrukcji i KL na zbiorze treningowym i testowym,
+- `training_log.csv` – przebieg treningu: dla każdej epoki wagi β i λ_CCT, średnia strata
+  całkowita, rekonstrukcji i KL na zbiorze treningowym i testowym oraz średni człon CCT
+  na zbiorze treningowym,
 - `data/test_indices.json` – indeksy widm należących do zbioru testowego (względem
   kolejności zwracanej przez `load_dataset()`).
 
